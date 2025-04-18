@@ -45,10 +45,10 @@ export default function SurveyComplete() {
           .get('content-type')
           ?.includes('application/json');
 
-        if (emailResponse.ok) {
-          const result = isJson ? await emailResponse.json() : { message: 'Success' };
-          setMessage(`✨ Your personalized itinerary has been emailed to ${emailFromStorage}. Check your inbox for a magical journey ahead.`);
-        } else {
+          if (emailResponse.ok) {
+            if (isJson) await emailResponse.json();
+            setMessage(`✨ Your personalized itinerary has been emailed to ${emailFromStorage}. Check your inbox for a magical journey ahead.`);
+          } else {
           let resultMessage = 'Unknown error';
           if (isJson) {
             try {
