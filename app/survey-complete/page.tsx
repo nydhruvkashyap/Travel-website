@@ -7,7 +7,7 @@ import { generatePDF } from '@/lib/generatePDF';
 
 export default function SurveyComplete() {
   const [message, setMessage] = useState<string>('Generating your itinerary...');
-  const [userEmail, setUserEmail] = useState<string>('');
+
   const hasRunRef = useRef(false);
 
   useEffect(() => {
@@ -24,8 +24,7 @@ export default function SurveyComplete() {
 
     const surveyAnswers: SurveyData = JSON.parse(surveyAnswersRaw);
     const promptOutput = createPromptFromSurvey(surveyAnswers);
-    setUserEmail(emailFromStorage);
-
+   
     async function generateItineraryAndSend() {
       try {
         const gptResponse = await generateGPTResponse(promptOutput);

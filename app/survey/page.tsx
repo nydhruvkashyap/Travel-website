@@ -7,6 +7,8 @@ import { DndContext, closestCenter } from "@dnd-kit/core";
 import { arrayMove, SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { SortableItem } from "../components/SortableItem";
 import { Progress } from "../components/ui/progress";
+import type { DragEndEvent } from '@dnd-kit/core';
+import type { ChangeEvent } from 'react';
 
 const travelInterests = [
   { id: "cultural", label: "Cultural Tourism", description: "Step into ancient worlds where palaces, forts, and timeless traditions still breathe." },
@@ -87,39 +89,49 @@ export default function SurveyPage() {
 
   const handleInput = (key: string, val: string) => setAnswers({ ...answers, [key]: val });
 
-  const handleDragEnd = (event: any) => {
+  const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
-    if (active.id !== over.id) {
-      setOrderedItems((items) => arrayMove(items, items.indexOf(active.id), items.indexOf(over.id)));
+    if (over && active.id !== over.id) {
+      setOrderedItems((items) =>
+        arrayMove(
+          items,
+          items.indexOf(active.id as string),
+          items.indexOf(over.id as string)
+        )
+      );
     }
   };
 
-  const handleSubDragEnd = (key: string, event: any) => {
+  const handleSubDragEnd = (key: string, event: DragEndEvent) => {
     const { active, over } = event;
-    if (active.id !== over.id) {
+    if (over && active.id !== over.id) {
       const newList = arrayMove(
         answers.subPrefs[key],
-        answers.subPrefs[key].indexOf(active.id),
-        answers.subPrefs[key].indexOf(over.id)
+        answers.subPrefs[key].indexOf(active.id as string),
+        answers.subPrefs[key].indexOf(over.id as string)
       );
-      setAnswers({ ...answers, subPrefs: { ...answers.subPrefs, [key]: newList } });
+      setAnswers({
+        ...answers,
+        subPrefs: { ...answers.subPrefs, [key]: newList },
+      });
     }
   };
-
+  
+  
   const renderInput = (label: string, key: string, placeholder = "") => (
     <div className="mb-4">
       <label className="block mb-1 font-medium">{label}</label>
       <input
         className="w-full p-3 border border-gray-300 rounded-xl"
-        value={(answers as any)[key]}
+        value={(answers as unknown as Record<string, string>)[key]}
         placeholder={placeholder}
-        onChange={(e) => handleInput(key, e.target.value)}
+        onChange={(e: ChangeEvent<HTMLInputElement>) => handleInput(key, e.target.value)}
       />
     </div>
   );
 
   const renderSubPrefDrag = (segment: string) => (
-    <DndContext collisionDetection={closestCenter} onDragEnd={(e) => handleSubDragEnd(segment, e)}>
+    <DndContext collisionDetection={closestCenter} onDragEnd={(e: DragEndEvent) => handleSubDragEnd(segment, e)}>
       <SortableContext items={answers.subPrefs[segment]} strategy={verticalListSortingStrategy}>
         {answers.subPrefs[segment].map((item, index) => (
           <SortableItem key={item} id={item}>
@@ -200,7 +212,7 @@ export default function SurveyPage() {
           </DndContext>
           <div className="mt-4">
   <label className="block mb-1 text-sm font-medium text-gray-700">
-    Anything travel theme-related you'd like us to know?
+    Anything travel theme-related you&rsquo;d like us to know?
   </label>
   <textarea
     value={answers.focusNote}
@@ -482,7 +494,7 @@ export default function SurveyPage() {
       {/* Step 11: Final Notes */}
       {step === 11 && (
         <div>
-          <h2 className="text-2xl font-semibold mb-2">Anything else you'd like us to know while planning your trip?</h2>
+          <h2 className="text-2xl font-semibold mb-2">Anything else you&rsquo;d like us to know while planning your trip?</h2>
           <textarea
             className="w-full p-3 border border-gray-300 rounded-xl min-h-[120px]"
             placeholder="e.g., Would love to see the Taj Mahal, vegetarian only, slower pace, want spiritual experiences..."

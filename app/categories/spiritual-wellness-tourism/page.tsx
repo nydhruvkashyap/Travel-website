@@ -1,4 +1,5 @@
 import Image from 'next/image';
+import Link from 'next/link';
 
 export default function SpiritualWellnessTourism() {
   return (
@@ -23,7 +24,7 @@ export default function SpiritualWellnessTourism() {
           <Image src="/images/wellness-tourism.jpg" alt="Ayurveda retreats, meditation, and yoga in India" width={400} height={260} className="rounded-lg" />
           <div>
             <h2 className="text-3xl font-semibold mb-4">Wellness Tourism – A Journey of Healing</h2>
-            <p className='text-xl leading-relaxed'>In Kerala’s Ayurveda retreats and Himalayan meditation centers, the scent of sandalwood lingers as warm herbal oils dissolve tension, restoring balance. Whether through Ayurveda, mindfulness, or sunrise yoga by the Ganges, India’s wellness traditions go beyond relaxation—they transform the body and soul.</p>
+            <p className='text-xl leading-relaxed'>In Kerala&rsquo;s Ayurveda retreats and Himalayan meditation centers, the scent of sandalwood lingers as warm herbal oils dissolve tension, restoring balance. Whether through Ayurveda, mindfulness, or sunrise yoga by the Ganges, India&rsquo;s wellness traditions go beyond relaxation—they transform the body and soul.</p>
           </div>
         </div>
 
@@ -32,7 +33,7 @@ export default function SpiritualWellnessTourism() {
           <Image src="/images/spiritual-tourism.jpg" alt="Meditation retreats, ashrams, and spiritual awakening in India" width={400} height={260} className="rounded-lg" />
           <div>
             <h2 className="text-3xl font-semibold mb-4">Spiritual Tourism – The Call of the Sacred</h2>
-            <p className='text-xl leading-relaxed'>Temples glowing at dawn, monks lost in deep prayer, and sacred rivers reflecting a thousand oil lamps. From the ashrams of Rishikesh to the monasteries of Ladakh, India’s spiritual pulse beats through places of worship where seekers come not just to pray, but to listen—to the silence, to themselves.</p>
+            <p className='text-xl leading-relaxed'>Temples glowing at dawn, monks lost in deep prayer, and sacred rivers reflecting a thousand oil lamps. From the ashrams of Rishikesh to the monasteries of Ladakh, India&rsquo;s spiritual pulse beats through places of worship where seekers come not just to pray, but to listen—to the silence, to themselves.</p>
           </div>
         </div>
 
@@ -48,13 +49,22 @@ export default function SpiritualWellnessTourism() {
 
       {/* Internal Link to Other Segments */}
       <div className="mt-8 text-center text-gray-700">
-        <p className="text-lg">Looking for more immersive experiences? <a href="/categories/cultural-tourism" className="text-blue-600 hover:underline">Explore India's Spiritual & Cultural Heritage</a>.</p>
+        <p className="text-lg">
+          Looking for more immersive experiences?{' '}
+          <Link href="/categories/cultural-tourism" className="text-blue-600 hover:underline">
+            Explore India&rsquo;s Spiritual & Cultural Heritage
+          </Link>.
+        </p>
       </div>
 
       {/* Call-to-Action */}
       <div className="mt-16 text-center">
         <h3 className="text-3xl font-semibold mb-4 font-playfair">Begin Your Journey of Renewal</h3>
-        <p className="mb-6"><span className='text-xl leading-relaxed'>At Mythara, we guide you through India’s most profound wellness and spiritual experiences—where every step is a step toward transformation.</span></p>
+        <p className="mb-6">
+          <span className='text-xl leading-relaxed'>
+            At Mythara, we guide you through India&rsquo;s most profound wellness and spiritual experiences—where every step is a step toward transformation.
+          </span>
+        </p>
         <a href="/itineraries" className="bg-yellow-600 text-white px-6 py-3 rounded-lg hover:bg-yellow-700">Explore Itineraries</a>
       </div>
     </div>

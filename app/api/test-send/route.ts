@@ -35,7 +35,7 @@ export async function POST(req: NextRequest) {
         'Content-Length': buffer.length.toString(),
       },
     });
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error('❌ PDF generation failed:', err);
     return new Response(JSON.stringify({ error: 'PDF generation failed' }), {
       status: 500,

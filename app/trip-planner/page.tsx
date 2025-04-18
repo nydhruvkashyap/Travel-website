@@ -58,7 +58,7 @@ export default function TripPlanner() {
           </button>
 
           <p className="text-xs text-gray-500 text-center mt-4">
-            You'll be redirected to a brief survey to help us personalize your itinerary.
+            You&rsquo;ll be redirected to a brief survey to help us personalize your itinerary.
           </p>
         </form>
       </div>

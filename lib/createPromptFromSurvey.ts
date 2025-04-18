@@ -87,6 +87,14 @@ Traveler Profile:
 ${weatherNote?.trim() ? `Weather Preferences: "${weatherNote.trim()}"\n` : ""}
 ${notes?.trim() ? `Final note from the traveler: "${notes.trim()}"\n` : ""}
 
-Ensure the itinerary aligns with the preferences and travel personality of a "${style}". Include seasonal details (e.g., monsoons in July) and ensure a high level of personalization, and seamlessly mention within the itinerary where and when it deviates from the input prompt.
+Ensure the itinerary aligns with the preferences and travel personality of a "${style}". Include seasonal details (e.g., monsoons in July) and ensure a high level of personalization, and seamlessly mention within the itinerary where and when it deviates from the input prompt. 
+
+IMPORTANT: 
+Please format the output so it can be easily rendered into a PDF using pdf-lib. 
+Each day should begin with a line starting with "DAY X: [Title]".
+Each activity MUST begin with a hyphen and a space ("- "). Do not use round bullets (•), numbers, or any other symbols. Only use "- ".
+Use a blank line to separate each day section.
+Do not use any Markdown, emojis, or extra styling.
+Keep each line under 100 characters for better readability.
 `.trim();
 }
