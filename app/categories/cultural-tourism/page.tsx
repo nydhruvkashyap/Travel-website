@@ -23,7 +23,7 @@ export default function CulturalTourism() {
         <div className="flex flex-col md:flex-row items-center gap-8">
           <Image src="/images/heritage-site.jpg" alt="Historical Monuments & Heritage Sites in India" width={400} height={260} className="rounded-lg" />
           <div>
-            <h2 className="text-3xl font-semibold mb-4">Explore India's Living History</h2>
+            <h2 className="text-3xl font-semibold mb-4">Explore India&rsquo;s Living History</h2>
             <p className='text-xl leading-relaxed'>India&rsquo;s history isn&rsquo;t locked away in museums—it&rsquo;s in the palaces, forts, and streets that tell the stories of dynasties, warriors, and ancient civilizations. Walk through the grand palaces of Rajasthan, explore centuries-old temple towns, and lose yourself in the historic alleys of Old Delhi.</p>
           </div>
         </div>
