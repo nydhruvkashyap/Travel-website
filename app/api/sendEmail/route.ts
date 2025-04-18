@@ -13,8 +13,14 @@ export async function POST(req: Request) {
     await sendEmailWithPDF(email, pdfBuffer);
 
     return NextResponse.json({ message: 'Email sent successfully!' });
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error('❌ Error in /api/sendEmail:', err);
-    return NextResponse.json({ message: err.message || 'Email failed.' }, { status: 500 });
+
+    let errorMessage = 'Email failed.';
+    if (err && typeof err === 'object' && 'message' in err) {
+      errorMessage = (err as { message?: string }).message || errorMessage;
+    }
+
+    return NextResponse.json({ message: errorMessage }, { status: 500 });
   }
 }

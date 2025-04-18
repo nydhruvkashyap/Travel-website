@@ -24,7 +24,6 @@ export async function sendEmailWithPDF(userEmail: string, pdfBuffer: Buffer) {
     attachments: [
       {
         filename: `India itinerary-${Date.now()}.pdf`,
-
         content: pdfBuffer,
         encoding: 'base64',
       },
@@ -35,8 +34,15 @@ export async function sendEmailWithPDF(userEmail: string, pdfBuffer: Buffer) {
     console.log('📨 Sending email to:', userEmail);
     const info = await transporter.sendMail(mailOptions);
     console.log('✅ Email sent:', info.response);
-  } catch (error: any) {
-    console.error('❌ Error sending email:', error.message);
-    if (error.response) console.error('🔎 SMTP response:', error.response);
+  } catch (error: unknown) {
+    if (error && typeof error === 'object' && 'message' in error) {
+      console.error('❌ Error sending email:', (error as { message?: string }).message);
+    } else {
+      console.error('❌ Error sending email:', error);
+    }
+
+    if (typeof error === 'object' && error && 'response' in error) {
+      console.error('🔎 SMTP response:', (error as { response?: unknown }).response);
+    }
   }
 }

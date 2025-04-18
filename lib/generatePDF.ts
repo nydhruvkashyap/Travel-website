@@ -212,7 +212,10 @@ y -= 10;
   return await pdfDoc.save();
 }
 
-function wrapLine(text: string, font: any, fontSize: number, maxWidth: number): string[] {
+import type { PDFFont } from 'pdf-lib';
+
+function wrapLine(text: string, font: PDFFont, fontSize: number, maxWidth: number): string[] {
+
   const words = text.split(' ');
   const lines: string[] = [];
   let currentLine = '';
