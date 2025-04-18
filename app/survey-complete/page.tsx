@@ -52,8 +52,9 @@ export default function SurveyComplete() {
           let resultMessage = 'Unknown error';
           if (isJson) {
             try {
-              const result = await emailResponse.json();
-              resultMessage = result.message || resultMessage;
+              const { message } = await emailResponse.json();
+              resultMessage = message || resultMessage;
+
             } catch {}
           }
           setMessage(`❌ Failed to email itinerary. Reason: ${resultMessage}`);
