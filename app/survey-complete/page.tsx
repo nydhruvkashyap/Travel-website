@@ -7,7 +7,6 @@ import { generatePDF } from '@/lib/generatePDF';
 
 export default function SurveyComplete() {
   const [message, setMessage] = useState<string>('Generating your itinerary...');
-
   const hasRunRef = useRef(false);
 
   useEffect(() => {
@@ -17,6 +16,9 @@ export default function SurveyComplete() {
     const surveyAnswersRaw = localStorage.getItem('surveyAnswers');
     const emailFromStorage = localStorage.getItem('userEmail');
 
+    console.log('📦 surveyAnswersRaw:', surveyAnswersRaw);
+    console.log('📦 emailFromStorage:', emailFromStorage);
+
     if (!surveyAnswersRaw || !emailFromStorage) {
       setMessage("Missing survey or email data.");
       return;
@@ -24,16 +26,27 @@ export default function SurveyComplete() {
 
     const surveyAnswers: SurveyData = JSON.parse(surveyAnswersRaw);
     const promptOutput = createPromptFromSurvey(surveyAnswers);
-   
+
     async function generateItineraryAndSend() {
       try {
+        console.log("⚙️ Generating GPT response...");
         const gptResponse = await generateGPTResponse(promptOutput);
+
         if (!gptResponse || typeof gptResponse !== 'string') {
           throw new Error("Invalid GPT response format.");
         }
 
+        console.log("🧾 GPT response snippet:", gptResponse.slice(0, 100));
+        console.log("⚙️ Generating PDF...");
         const pdfBlob = await generatePDF(gptResponse);
-        const pdfBase64 = Buffer.from(pdfBlob).toString('base64');
+
+        console.log("📄 PDF Blob Type:", typeof pdfBlob);
+        console.log("📄 PDF Blob Length:", pdfBlob?.length);
+
+        const pdfBase64 = btoa(String.fromCharCode(...new Uint8Array(pdfBlob)));
+
+        console.log("📬 Sending PDF to:", emailFromStorage);
+        console.log("📄 Base64 Length:", pdfBase64.length);
 
         const emailResponse = await fetch('/api/sendEmail', {
           method: 'POST',
@@ -41,26 +54,30 @@ export default function SurveyComplete() {
           body: JSON.stringify({ email: emailFromStorage, pdfBase64 }),
         });
 
+        console.log("📩 Email response status:", emailResponse.status);
+
         const isJson = emailResponse.headers
           .get('content-type')
           ?.includes('application/json');
 
-          if (emailResponse.ok) {
-            if (isJson) await emailResponse.json();
-            setMessage(`✨ Your personalized itinerary has been emailed to ${emailFromStorage}. Check your inbox for a magical journey ahead.`);
-          } else {
+        const rawText = await emailResponse.text();
+        console.log("📩 Email response body:", rawText);
+
+        if (emailResponse.ok) {
+          if (isJson) JSON.parse(rawText); // optional read
+          setMessage(`✨ Your personalized itinerary has been emailed to ${emailFromStorage}. Check your inbox for a magical journey ahead.`);
+        } else {
           let resultMessage = 'Unknown error';
           if (isJson) {
             try {
-              const { message } = await emailResponse.json();
+              const { message } = JSON.parse(rawText);
               resultMessage = message || resultMessage;
-
             } catch {}
           }
           setMessage(`❌ Failed to email itinerary. Reason: ${resultMessage}`);
         }
       } catch (err) {
-        console.error('Itinerary generation/email failed:', err);
+        console.error('❌ Itinerary generation/email failed:', err);
         setMessage('❌ There was an error generating or sending your itinerary.');
       }
     }
