@@ -5,7 +5,7 @@ export const config = {
 };
 
 import { NextRequest, NextResponse } from 'next/server';
-import { createPromptFromSurvey, SurveyData } from '@/lib/createPromptFromSurvey'; // ❌ unused, commented below
+//import { createPromptFromSurvey, SurveyData } from '@/lib/createPromptFromSurvey'; // ❌ unused, commented below
 import { generatePDF } from '@/lib/generatePDF';
 import { sendEmailWithPDF } from '@/lib/sendEmailWithPDF';
 // import OpenAI from 'openai'; // ❌ unused
