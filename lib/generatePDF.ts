@@ -1,5 +1,7 @@
 import { PDFDocument, rgb } from 'pdf-lib';
 import fontkit from '@pdf-lib/fontkit';
+import fs from 'fs/promises';
+import path from 'path';
 
 export async function generatePDF(text: string): Promise<Uint8Array> {
   const pdfDoc = await PDFDocument.create();
@@ -17,21 +19,27 @@ export async function generatePDF(text: string): Promise<Uint8Array> {
   let regularFont, boldFont, italicFont;
 
   try {
-    let regularBytes, boldBytes, bolditalicBytes;
+    console.log('🔤 Embedding fonts from /public/fonts directory...');
 
-    if (typeof window === 'undefined') {
-      const fs = await import('fs/promises');
-      const path = await import('path');
-      regularBytes = await fs.readFile(path.join(process.cwd(), 'public/fonts/Poppins-Regular.ttf'));
-      boldBytes = await fs.readFile(path.join(process.cwd(), 'public/fonts/Poppins-Bold.ttf'));
-      bolditalicBytes = await fs.readFile(path.join(process.cwd(), 'public/fonts/Poppins-BoldItalic.ttf'));
-    } else {
-      throw new Error('Font loading must run server-side.');
-    }
+    const regularPath = path.join(process.cwd(), 'public/fonts/Poppins-Regular.ttf');
+    const boldPath = path.join(process.cwd(), 'public/fonts/Poppins-Bold.ttf');
+    const italicPath = path.join(process.cwd(), 'public/fonts/Poppins-BoldItalic.ttf');
+
+    console.log('🔍 Checking font paths:', { regularPath, boldPath, italicPath });
+
+    const regularBytes = await fs.readFile(regularPath);
+    console.log('✅ Loaded regular font');
+
+    const boldBytes = await fs.readFile(boldPath);
+    console.log('✅ Loaded bold font');
+
+    const italicBytes = await fs.readFile(italicPath);
+    console.log('✅ Loaded italic font');
 
     regularFont = await pdfDoc.embedFont(regularBytes);
     boldFont = await pdfDoc.embedFont(boldBytes);
-    italicFont = await pdfDoc.embedFont(bolditalicBytes);
+    italicFont = await pdfDoc.embedFont(italicBytes);
+    console.log('✅ Fonts embedded');
   } catch (e) {
     console.error('🚨 Font embedding failed:', e);
     throw new Error('Font embedding failed');
@@ -39,13 +47,13 @@ export async function generatePDF(text: string): Promise<Uint8Array> {
 
   let logoImage, logoDims;
   try {
-    const fs = await import('fs/promises');
-    const path = await import('path');
     const logoPath = path.join(process.cwd(), 'public', 'mythara-logo.png');
     const logoBytes = await fs.readFile(logoPath);
+    console.log('🖼️ Logo bytes loaded:', logoBytes.byteLength);
 
     logoImage = await pdfDoc.embedPng(logoBytes);
     logoDims = logoImage.scale(150 / logoImage.width);
+    console.log('✅ Logo embedded');
   } catch (e) {
     console.error('🚨 Logo embed failed:', e);
     throw new Error('Logo embedding failed');
