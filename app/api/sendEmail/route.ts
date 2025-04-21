@@ -14,10 +14,10 @@ import { sendEmailWithPDF } from '@/lib/sendEmailWithPDF';
 
 export async function POST(req: NextRequest) {
   try {
-    const { email /* , surveyAnswers: raw */ } = (await req.json()) as {
+    const { email } = (await req.json()) as {
       email?: string;
-      surveyAnswers?: SurveyData; // ❌ surveyAnswers not used in test mode
     };
+    
 
     if (!email) {
       console.error('❌ Missing email from request');
