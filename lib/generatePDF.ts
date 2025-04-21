@@ -17,22 +17,16 @@ export async function generatePDF(text: string): Promise<Uint8Array> {
   let regularFont, boldFont, italicFont;
 
   try {
-    let regularBytes, boldBytes, bolditalicBytes;
-
     const baseUrl = process.env.VERCEL_URL
       ? `https://${process.env.VERCEL_URL}`
       : 'http://localhost:3000';
-
-    const [reg, bold, italic] = await Promise.all([
+  
+    const [regularBytes, boldBytes, bolditalicBytes] = await Promise.all([
       fetch(`${baseUrl}/fonts/Poppins-Regular.ttf`).then(res => res.arrayBuffer()),
       fetch(`${baseUrl}/fonts/Poppins-Bold.ttf`).then(res => res.arrayBuffer()),
       fetch(`${baseUrl}/fonts/Poppins-BoldItalic.ttf`).then(res => res.arrayBuffer()),
     ]);
-
-    regularBytes = reg;
-    boldBytes = bold;
-    bolditalicBytes = italic;
-
+  
     regularFont = await pdfDoc.embedFont(regularBytes);
     boldFont = await pdfDoc.embedFont(boldBytes);
     italicFont = await pdfDoc.embedFont(bolditalicBytes);
@@ -40,7 +34,7 @@ export async function generatePDF(text: string): Promise<Uint8Array> {
     console.error('🚨 Font embedding failed:', e);
     throw new Error('Font embedding failed');
   }
-
+  
   let logoImage, logoDims;
   try {
     const baseUrl = process.env.VERCEL_URL
