@@ -16,20 +16,14 @@ export async function generatePDF(text: string): Promise<Uint8Array> {
   const footerSize = 11;
   const lineHeight = 18;
 
-  let regularFont, boldFont, italicFont;
-
   const basePath = process.env.VERCEL ? '/var/task/public/fonts' : path.join(process.cwd(), 'public/fonts');
   const regularPath = path.join(basePath, 'Poppins-Regular.ttf');
   const boldPath = path.join(basePath, 'Poppins-Bold.ttf');
   const italicPath = path.join(basePath, 'Poppins-BoldItalic.ttf');
 
-  const regularBytes = await fs.readFile(regularPath);
-  const boldBytes = await fs.readFile(boldPath);
-  const italicBytes = await fs.readFile(italicPath);
-
-  regularFont = await pdfDoc.embedFont(regularBytes);
-  boldFont = await pdfDoc.embedFont(boldBytes);
-  italicFont = await pdfDoc.embedFont(italicBytes);
+  const regularFont = await pdfDoc.embedFont(await fs.readFile(regularPath));
+  const boldFont = await pdfDoc.embedFont(await fs.readFile(boldPath));
+  const italicFont = await pdfDoc.embedFont(await fs.readFile(italicPath));
 
   const logoPath = path.join(process.cwd(), 'public', 'mythara-logo.png');
   const logoBytes = await fs.readFile(logoPath);
