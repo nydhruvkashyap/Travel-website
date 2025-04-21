@@ -18,22 +18,21 @@ export async function generatePDF(text: string): Promise<Uint8Array> {
 
   try {
     let regularBytes, boldBytes, bolditalicBytes;
-  
-    if (typeof window === 'undefined') {
-      const fs = await import('fs/promises');
-      const path = await import('path');
-      regularBytes = await fs.readFile(path.join(process.cwd(), 'public/fonts/Poppins-Regular.ttf'));
-      boldBytes = await fs.readFile(path.join(process.cwd(), 'public/fonts/Poppins-Bold.ttf'));
-      bolditalicBytes = await fs.readFile(path.join(process.cwd(), 'public/fonts/Poppins-BoldItalic.ttf'));
-    } else {
-      const regularRes = await fetch('/fonts/Poppins-Regular.ttf');
-      regularBytes = await regularRes.arrayBuffer();
-      const boldRes = await fetch('/fonts/Poppins-Bold.ttf');
-      boldBytes = await boldRes.arrayBuffer();
-      const italicRes = await fetch('/fonts/Poppins-Italic.ttf');
-      bolditalicBytes = await italicRes.arrayBuffer();
-    }
-  
+
+    const baseUrl = process.env.VERCEL_URL
+      ? `https://${process.env.VERCEL_URL}`
+      : 'http://localhost:3000';
+
+    const [reg, bold, italic] = await Promise.all([
+      fetch(`${baseUrl}/fonts/Poppins-Regular.ttf`).then(res => res.arrayBuffer()),
+      fetch(`${baseUrl}/fonts/Poppins-Bold.ttf`).then(res => res.arrayBuffer()),
+      fetch(`${baseUrl}/fonts/Poppins-BoldItalic.ttf`).then(res => res.arrayBuffer()),
+    ]);
+
+    regularBytes = reg;
+    boldBytes = bold;
+    bolditalicBytes = italic;
+
     regularFont = await pdfDoc.embedFont(regularBytes);
     boldFont = await pdfDoc.embedFont(boldBytes);
     italicFont = await pdfDoc.embedFont(bolditalicBytes);
@@ -41,19 +40,14 @@ export async function generatePDF(text: string): Promise<Uint8Array> {
     console.error('🚨 Font embedding failed:', e);
     throw new Error('Font embedding failed');
   }
-  
+
   let logoImage, logoDims;
   try {
-    let logoBytes;
-    if (typeof window === 'undefined') {
-      const fs = await import('fs/promises');
-      const path = await import('path');
-      const logoPath = path.join(process.cwd(), 'public', 'mythara-logo.png');
-      logoBytes = await fs.readFile(logoPath);
-    } else {
-      const res = await fetch('/mythara-logo.png');
-      logoBytes = await res.arrayBuffer();
-    }
+    const baseUrl = process.env.VERCEL_URL
+      ? `https://${process.env.VERCEL_URL}`
+      : 'http://localhost:3000';
+    const res = await fetch(`${baseUrl}/mythara-logo.png`);
+    const logoBytes = await res.arrayBuffer();
 
     logoImage = await pdfDoc.embedPng(logoBytes);
     logoDims = logoImage.scale(150 / logoImage.width);
@@ -65,7 +59,6 @@ export async function generatePDF(text: string): Promise<Uint8Array> {
   let page = pdfDoc.addPage([pageWidth, pageHeight]);
   let y = pageHeight - margin;
 
-  // Draw logo
   page.drawImage(logoImage, {
     x: margin,
     y: y - logoDims.height,
@@ -79,32 +72,31 @@ export async function generatePDF(text: string): Promise<Uint8Array> {
     height: logoDims.height,
   });
 
-y -= logoDims.height + 30;
+  y -= logoDims.height + 30;
 
-const introParagraph = `
+  const introParagraph = `
 Welcome to your personalized Mythara travel itinerary! We are thrilled to be a part of your journey to India. We’ve designed this journey to match your interests and travel style, helping you experience India in a way that’s meaningful, memorable, and truly yours.
 `;
 
-const introLines = wrapLine(introParagraph.trim(), regularFont, fontSize, usableWidth);
+  const introLines = wrapLine(introParagraph.trim(), regularFont, fontSize, usableWidth);
 
-for (const line of introLines) {
-  if (y < margin + lineHeight) {
-    page = pdfDoc.addPage([pageWidth, pageHeight]);
-    y = pageHeight - margin;
+  for (const line of introLines) {
+    if (y < margin + lineHeight) {
+      page = pdfDoc.addPage([pageWidth, pageHeight]);
+      y = pageHeight - margin;
+    }
+    page.drawText(line, {
+      x: margin,
+      y,
+      size: fontSize,
+      font: regularFont,
+      color: rgb(0, 0, 0),
+    });
+    y -= lineHeight;
   }
-  page.drawText(line, {
-    x: margin,
-    y,
-    size: fontSize,
-    font: regularFont,
-    color: rgb(0, 0, 0),
-  });
-  y -= lineHeight;
-}
 
-y -= 10;
+  y -= 10;
 
-  // Main content
   const sections = text.split(/\n{2,}/);
   for (const section of sections) {
     const lines = section.split(/\r?\n/);
@@ -144,7 +136,6 @@ y -= 10;
     y -= 10;
   }
 
-  // Footer - wrapped and styled
   const footerStart = 'Contact us at ';
   const email = 'support@mythara.org';
   const footerEnd = ' for assistance with end-to-end management of your magical trip to India.';
@@ -215,7 +206,6 @@ y -= 10;
 import type { PDFFont } from 'pdf-lib';
 
 function wrapLine(text: string, font: PDFFont, fontSize: number, maxWidth: number): string[] {
-
   const words = text.split(' ');
   const lines: string[] = [];
   let currentLine = '';
