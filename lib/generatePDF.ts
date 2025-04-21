@@ -3,21 +3,7 @@ import fontkit from '@pdf-lib/fontkit';
 import fs from 'fs/promises';
 import path from 'path';
 
-async function sendLiveLog(message: string) {
-  try {
-    await fetch(process.env.LOG_WEBHOOK!, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ message, timestamp: new Date().toISOString() }),
-    });
-  } catch (e) {
-    console.error('⚠️ Failed to send live log:', e);
-  }
-}
-
 export async function generatePDF(text: string): Promise<Uint8Array> {
-  console.time('📄 generatePDF()');
-  await sendLiveLog('📄 Starting generatePDF()');
   const pdfDoc = await PDFDocument.create();
   pdfDoc.registerFontkit(fontkit);
 
@@ -32,201 +18,169 @@ export async function generatePDF(text: string): Promise<Uint8Array> {
 
   let regularFont, boldFont, italicFont;
 
-  try {
-    await sendLiveLog('🔤 Embedding fonts from /public/fonts');
+  const basePath = process.env.VERCEL ? '/var/task/public/fonts' : path.join(process.cwd(), 'public/fonts');
+  const regularPath = path.join(basePath, 'Poppins-Regular.ttf');
+  const boldPath = path.join(basePath, 'Poppins-Bold.ttf');
+  const italicPath = path.join(basePath, 'Poppins-BoldItalic.ttf');
 
-    const basePath = process.env.VERCEL ? '/var/task/public/fonts' : path.join(process.cwd(), 'public/fonts');
-    const regularPath = path.join(basePath, 'Poppins-Regular.ttf');
-    const boldPath = path.join(basePath, 'Poppins-Bold.ttf');
-    const italicPath = path.join(basePath, 'Poppins-BoldItalic.ttf');
+  const regularBytes = await fs.readFile(regularPath);
+  const boldBytes = await fs.readFile(boldPath);
+  const italicBytes = await fs.readFile(italicPath);
 
-    await sendLiveLog(`🔍 Font paths: ${JSON.stringify({ regularPath, boldPath, italicPath })}`);
+  regularFont = await pdfDoc.embedFont(regularBytes);
+  boldFont = await pdfDoc.embedFont(boldBytes);
+  italicFont = await pdfDoc.embedFont(italicBytes);
 
-    const regularBytes = await fs.readFile(regularPath);
-    const boldBytes = await fs.readFile(boldPath);
-    const italicBytes = await fs.readFile(italicPath);
+  const logoPath = path.join(process.cwd(), 'public', 'mythara-logo.png');
+  const logoBytes = await fs.readFile(logoPath);
+  const logoImage = await pdfDoc.embedPng(logoBytes);
+  const logoDims = logoImage.scale(150 / logoImage.width);
 
-    await sendLiveLog('✅ Font files loaded');
+  let page = pdfDoc.addPage([pageWidth, pageHeight]);
+  let y = pageHeight - margin;
 
-    regularFont = await pdfDoc.embedFont(regularBytes);
-    boldFont = await pdfDoc.embedFont(boldBytes);
-    italicFont = await pdfDoc.embedFont(italicBytes);
-    await sendLiveLog('✅ Fonts embedded');
-  } catch (e) {
-    await sendLiveLog('🚨 Font embedding failed: ' + String(e));
-    console.error('🚨 Font embedding failed:', e);
-    throw new Error('Font embedding failed');
-  }
+  page.drawImage(logoImage, {
+    x: margin,
+    y: y - logoDims.height,
+    width: logoDims.width,
+    height: logoDims.height,
+  });
+  page.drawImage(logoImage, {
+    x: margin + 0.5,
+    y: y - logoDims.height - 0.5,
+    width: logoDims.width,
+    height: logoDims.height,
+  });
 
-  let logoImage, logoDims;
-  try {
-    const logoPath = path.join(process.cwd(), 'public', 'mythara-logo.png');
-    const logoBytes = await fs.readFile(logoPath);
-    await sendLiveLog(`🖼️ Logo bytes loaded: ${logoBytes.byteLength}`);
+  y -= logoDims.height + 30;
 
-    logoImage = await pdfDoc.embedPng(logoBytes);
-    logoDims = logoImage.scale(150 / logoImage.width);
-    await sendLiveLog('✅ Logo embedded');
-  } catch (e) {
-    await sendLiveLog('🚨 Logo embed failed: ' + String(e));
-    console.error('🚨 Logo embed failed:', e);
-    throw new Error('Logo embedding failed');
-  }
-
-  try {
-    await sendLiveLog('📝 Starting PDF content rendering...');
-    let page = pdfDoc.addPage([pageWidth, pageHeight]);
-    let y = pageHeight - margin;
-
-    page.drawImage(logoImage, {
-      x: margin,
-      y: y - logoDims.height,
-      width: logoDims.width,
-      height: logoDims.height,
-    });
-    page.drawImage(logoImage, {
-      x: margin + 0.5,
-      y: y - logoDims.height - 0.5,
-      width: logoDims.width,
-      height: logoDims.height,
-    });
-
-    y -= logoDims.height + 30;
-
-    const introParagraph = `
+  const introParagraph = `
 Welcome to your personalized Mythara travel itinerary! We are thrilled to be a part of your journey to India. We’ve designed this journey to match your interests and travel style, helping you experience India in a way that’s meaningful, memorable, and truly yours.
 `;
 
-    const introLines = wrapLine(introParagraph.trim(), regularFont, fontSize, usableWidth);
+  const introLines = wrapLine(introParagraph.trim(), regularFont, fontSize, usableWidth);
 
-    for (const line of introLines) {
+  for (const line of introLines) {
+    if (y < margin + lineHeight) {
+      page = pdfDoc.addPage([pageWidth, pageHeight]);
+      y = pageHeight - margin;
+    }
+    page.drawText(line, {
+      x: margin,
+      y,
+      size: fontSize,
+      font: regularFont,
+      color: rgb(0, 0, 0),
+    });
+    y -= lineHeight;
+  }
+
+  y -= 10;
+
+  const sections = text.split(/\n{2,}/);
+  for (const section of sections) {
+    const lines = section.split(/\r?\n/);
+    for (const rawLine of lines) {
+      const line = rawLine.trim();
+      if (!line) continue;
+
       if (y < margin + lineHeight) {
         page = pdfDoc.addPage([pageWidth, pageHeight]);
         y = pageHeight - margin;
       }
-      page.drawText(line, {
-        x: margin,
-        y,
-        size: fontSize,
-        font: regularFont,
-        color: rgb(0, 0, 0),
-      });
-      y -= lineHeight;
-    }
 
-    y -= 10;
+      const isDayHeader = /^DAY\s+\d+/i.test(line);
+      const isBullet = line.startsWith('-');
+      const fontToUse = isDayHeader ? boldFont : regularFont;
+      const size = isDayHeader ? headerSize : fontSize;
+      const x = isBullet ? margin + 15 : margin;
 
-    const sections = text.split(/\n{2,}/);
-    for (const section of sections) {
-      const lines = section.split(/\r?\n/);
-      for (const rawLine of lines) {
-        const line = rawLine.trim();
-        if (!line) continue;
-
+      const wrapped = wrapLine(line, fontToUse, size, usableWidth - (isBullet ? 15 : 0));
+      for (const subLine of wrapped) {
         if (y < margin + lineHeight) {
           page = pdfDoc.addPage([pageWidth, pageHeight]);
           y = pageHeight - margin;
         }
-
-        const isDayHeader = /^DAY\s+\d+/i.test(line);
-        const isBullet = line.startsWith('-');
-        const fontToUse = isDayHeader ? boldFont : regularFont;
-        const size = isDayHeader ? headerSize : fontSize;
-        const x = isBullet ? margin + 15 : margin;
-
-        const wrapped = wrapLine(line, fontToUse, size, usableWidth - (isBullet ? 15 : 0));
-        for (const subLine of wrapped) {
-          if (y < margin + lineHeight) {
-            page = pdfDoc.addPage([pageWidth, pageHeight]);
-            y = pageHeight - margin;
-          }
-          page.drawText(subLine, {
-            x,
-            y,
-            size,
-            font: fontToUse,
-            color: rgb(0, 0, 0),
-          });
-          y -= lineHeight;
-        }
-
-        y -= 6;
+        page.drawText(subLine, {
+          x,
+          y,
+          size,
+          font: fontToUse,
+          color: rgb(0, 0, 0),
+        });
+        y -= lineHeight;
       }
-      y -= 10;
+
+      y -= 6;
+    }
+    y -= 10;
+  }
+
+  const footerStart = 'Contact us at ';
+  const email = 'support@mythara.org';
+  const footerEnd = ' for assistance with end-to-end management of your magical trip to India.';
+  const fullFooter = footerStart + email + footerEnd;
+
+  const footerLines = wrapLine(fullFooter, boldFont, footerSize, usableWidth);
+  let yOffset = y - lineHeight;
+
+  for (const line of footerLines) {
+    if (y < margin + lineHeight) {
+      page = pdfDoc.addPage([pageWidth, pageHeight]);
+      y = pageHeight - margin;
+      yOffset = y - lineHeight;
     }
 
-    const footerStart = 'Contact us at ';
-    const email = 'support@mythara.org';
-    const footerEnd = ' for assistance with end-to-end management of your magical trip to India.';
-    const fullFooter = footerStart + email + footerEnd;
+    const emailIndex = line.indexOf(email);
+    if (emailIndex >= 0) {
+      const beforeEmail = line.slice(0, emailIndex);
+      const afterEmail = line.slice(emailIndex + email.length);
+      let xPos = margin;
 
-    const footerLines = wrapLine(fullFooter, boldFont, footerSize, usableWidth);
-    let yOffset = y - lineHeight;
-
-    for (const line of footerLines) {
-      if (y < margin + lineHeight) {
-        page = pdfDoc.addPage([pageWidth, pageHeight]);
-        y = pageHeight - margin;
-        yOffset = y - lineHeight;
-      }
-
-      const emailIndex = line.indexOf(email);
-      if (emailIndex >= 0) {
-        const beforeEmail = line.slice(0, emailIndex);
-        const afterEmail = line.slice(emailIndex + email.length);
-        let xPos = margin;
-
-        if (beforeEmail) {
-          page.drawText(beforeEmail, {
-            x: xPos,
-            y: yOffset,
-            size: footerSize,
-            font: boldFont,
-            color: rgb(0, 0, 0),
-          });
-          xPos += boldFont.widthOfTextAtSize(beforeEmail, footerSize);
-        }
-
-        page.drawText(email, {
+      if (beforeEmail) {
+        page.drawText(beforeEmail, {
           x: xPos,
           y: yOffset,
           size: footerSize,
-          font: italicFont,
-          color: rgb(0, 0, 0.4),
+          font: boldFont,
+          color: rgb(0, 0, 0),
         });
-        xPos += italicFont.widthOfTextAtSize(email, footerSize);
+        xPos += boldFont.widthOfTextAtSize(beforeEmail, footerSize);
+      }
 
-        if (afterEmail) {
-          page.drawText(afterEmail, {
-            x: xPos,
-            y: yOffset,
-            size: footerSize,
-            font: boldFont,
-            color: rgb(0, 0, 0),
-          });
-        }
-      } else {
-        page.drawText(line, {
-          x: margin,
+      page.drawText(email, {
+        x: xPos,
+        y: yOffset,
+        size: footerSize,
+        font: italicFont,
+        color: rgb(0, 0, 0.4),
+      });
+      xPos += italicFont.widthOfTextAtSize(email, footerSize);
+
+      if (afterEmail) {
+        page.drawText(afterEmail, {
+          x: xPos,
           y: yOffset,
           size: footerSize,
           font: boldFont,
           color: rgb(0, 0, 0),
         });
       }
-
-      y -= lineHeight;
-      yOffset -= lineHeight;
+    } else {
+      page.drawText(line, {
+        x: margin,
+        y: yOffset,
+        size: footerSize,
+        font: boldFont,
+        color: rgb(0, 0, 0),
+      });
     }
 
-    console.timeEnd('📄 generatePDF()');
-    await sendLiveLog('✅ PDF generation complete');
-    return await pdfDoc.save();
-  } catch (pdfError) {
-    console.error('❌ PDF generation failed:', pdfError);
-    await sendLiveLog('❌ PDF generation failed: ' + String(pdfError));
-    throw new Error('PDF generation failed');
+    y -= lineHeight;
+    yOffset -= lineHeight;
   }
+
+  return await pdfDoc.save();
 }
 
 import type { PDFFont } from 'pdf-lib';

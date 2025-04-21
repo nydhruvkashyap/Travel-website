@@ -12,8 +12,6 @@ export async function sendEmailWithPDF(userEmail: string, pdfBuffer: Buffer) {
       user: smtpUser,
       pass: smtpPass,
     },
-    logger: true,
-    debug: true,
   });
 
   const mailOptions = {
@@ -31,7 +29,6 @@ export async function sendEmailWithPDF(userEmail: string, pdfBuffer: Buffer) {
   };
 
   try {
-    console.log('📨 Sending email to:', userEmail);
     const info = await transporter.sendMail(mailOptions);
     console.log('✅ Email sent:', info.response);
   } catch (error: unknown) {
@@ -43,19 +40,6 @@ export async function sendEmailWithPDF(userEmail: string, pdfBuffer: Buffer) {
 
     if (typeof error === 'object' && error && 'response' in error) {
       console.error('🔎 SMTP response:', (error as { response?: unknown }).response);
-    }
-
-    try {
-      await fetch(process.env.LOG_WEBHOOK!, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          message: `❌ Email send failed: ${errorMessage}`,
-          timestamp: new Date().toISOString(),
-        }),
-      });
-    } catch (logErr) {
-      console.error('⚠️ Failed to send live log for email failure:', logErr);
     }
   }
 }
