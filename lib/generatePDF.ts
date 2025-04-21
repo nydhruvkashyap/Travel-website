@@ -17,15 +17,17 @@ export async function generatePDF(text: string): Promise<Uint8Array> {
   let regularFont, boldFont, italicFont;
 
   try {
-    const baseUrl = process.env.VERCEL_URL
-      ? `https://${process.env.VERCEL_URL}`
-      : 'http://localhost:3000';
+    let regularBytes, boldBytes, bolditalicBytes;
 
-    const [regularBytes, boldBytes, bolditalicBytes] = await Promise.all([
-      fetch(`${baseUrl}/fonts/Poppins-Regular.ttf`).then((res) => res.arrayBuffer()),
-      fetch(`${baseUrl}/fonts/Poppins-Bold.ttf`).then((res) => res.arrayBuffer()),
-      fetch(`${baseUrl}/fonts/Poppins-BoldItalic.ttf`).then((res) => res.arrayBuffer()),
-    ]);
+    if (typeof window === 'undefined') {
+      const fs = await import('fs/promises');
+      const path = await import('path');
+      regularBytes = await fs.readFile(path.join(process.cwd(), 'public/fonts/Poppins-Regular.ttf'));
+      boldBytes = await fs.readFile(path.join(process.cwd(), 'public/fonts/Poppins-Bold.ttf'));
+      bolditalicBytes = await fs.readFile(path.join(process.cwd(), 'public/fonts/Poppins-BoldItalic.ttf'));
+    } else {
+      throw new Error('Font loading must run server-side.');
+    }
 
     regularFont = await pdfDoc.embedFont(regularBytes);
     boldFont = await pdfDoc.embedFont(boldBytes);
@@ -37,11 +39,10 @@ export async function generatePDF(text: string): Promise<Uint8Array> {
 
   let logoImage, logoDims;
   try {
-    const baseUrl = process.env.VERCEL_URL
-      ? `https://${process.env.VERCEL_URL}`
-      : 'http://localhost:3000';
-    const res = await fetch(`${baseUrl}/mythara-logo.png`);
-    const logoBytes = await res.arrayBuffer();
+    const fs = await import('fs/promises');
+    const path = await import('path');
+    const logoPath = path.join(process.cwd(), 'public', 'mythara-logo.png');
+    const logoBytes = await fs.readFile(logoPath);
 
     logoImage = await pdfDoc.embedPng(logoBytes);
     logoDims = logoImage.scale(150 / logoImage.width);
