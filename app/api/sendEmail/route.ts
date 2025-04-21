@@ -1,7 +1,8 @@
-// Force this API to run on Node.js (60 sec timeout), not Edge (10 sec)
+// app/api/sendEmail/route.ts
+
 export const config = {
   runtime: 'nodejs',
-  regions: ['iad1'],  // optional, pin to your region
+  regions: ['iad1'],
 };
 
 import { NextRequest, NextResponse } from 'next/server';
@@ -16,25 +17,46 @@ export async function POST(req: NextRequest) {
   try {
     const { email, surveyAnswers: raw } = (await req.json()) as {
       email?: string;
-      surveyAnswers?: SurveyData;
+      surveyAnswers?: SurveyData | string;
     };
+
+    console.log('✅ Incoming request');
+    console.log('📧 Email:', email);
+    console.log('📊 Raw surveyAnswers:', typeof raw === 'string' ? raw.slice(0, 200) : JSON.stringify(raw).slice(0, 200));
+
     if (!email || !raw) {
+      console.error('❌ Missing email or surveyAnswers');
       return NextResponse.json({ error: 'Missing data' }, { status: 400 });
     }
-    const prompt = createPromptFromSurvey(
-      typeof raw === 'string' ? JSON.parse(raw) : raw
-    );
+
+    const surveyObj: SurveyData = typeof raw === 'string' ? JSON.parse(raw) : raw;
+    const prompt = createPromptFromSurvey(surveyObj);
+
+    console.log('🧠 Prompt snippet:', prompt.slice(0, 200));
+    console.log('🧠 Prompt length:', prompt.length);
+
     const resp = await ai.chat.completions.create({
       model: 'gpt-4',
       messages: [{ role: 'user', content: prompt }],
       max_tokens: 2000,
       temperature: 0.7,
     });
-    if (!resp.choices?.length) throw new Error('No GPT response');
-    const text = resp.choices[0].message.content!;
-    const pdfBytes = await generatePDF(text);
+
+    if (!resp.choices?.length) {
+      console.error('❌ No GPT response received');
+      throw new Error('No GPT response');
+    }
+
+    const gptText = resp.choices[0].message.content;
+    console.log('📨 GPT response received');
+
+    const pdfBytes = await generatePDF(gptText || '');
+    console.log('📄 PDF generated, size:', pdfBytes.length);
+
     const pdfBuffer = Buffer.from(pdfBytes);
     await sendEmailWithPDF(email, pdfBuffer);
+    console.log('📬 Email sent to:', email);
+
     return NextResponse.json({ message: 'Email sent!' });
   } catch (err: unknown) {
     console.error('❌ sendEmail error:', err);
