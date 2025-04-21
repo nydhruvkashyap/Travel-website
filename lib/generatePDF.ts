@@ -3,8 +3,21 @@ import fontkit from '@pdf-lib/fontkit';
 import fs from 'fs/promises';
 import path from 'path';
 
+async function sendLiveLog(message: string) {
+  try {
+    await fetch(process.env.LOG_WEBHOOK!, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message, timestamp: new Date().toISOString() }),
+    });
+  } catch (e) {
+    console.error('⚠️ Failed to send live log:', e);
+  }
+}
+
 export async function generatePDF(text: string): Promise<Uint8Array> {
   console.time('📄 generatePDF()');
+  await sendLiveLog('📄 Starting generatePDF()');
   const pdfDoc = await PDFDocument.create();
   pdfDoc.registerFontkit(fontkit);
 
@@ -20,29 +33,27 @@ export async function generatePDF(text: string): Promise<Uint8Array> {
   let regularFont, boldFont, italicFont;
 
   try {
-    console.log('🔤 Embedding fonts from /public/fonts directory...');
+    await sendLiveLog('🔤 Embedding fonts from /public/fonts');
 
     const basePath = process.env.VERCEL ? '/var/task/public/fonts' : path.join(process.cwd(), 'public/fonts');
     const regularPath = path.join(basePath, 'Poppins-Regular.ttf');
     const boldPath = path.join(basePath, 'Poppins-Bold.ttf');
     const italicPath = path.join(basePath, 'Poppins-BoldItalic.ttf');
 
-    console.log('🔍 Checking font paths:', { regularPath, boldPath, italicPath });
+    await sendLiveLog(`🔍 Font paths: ${JSON.stringify({ regularPath, boldPath, italicPath })}`);
 
     const regularBytes = await fs.readFile(regularPath);
-    console.log('✅ Loaded regular font');
-
     const boldBytes = await fs.readFile(boldPath);
-    console.log('✅ Loaded bold font');
-
     const italicBytes = await fs.readFile(italicPath);
-    console.log('✅ Loaded italic font');
+
+    await sendLiveLog('✅ Font files loaded');
 
     regularFont = await pdfDoc.embedFont(regularBytes);
     boldFont = await pdfDoc.embedFont(boldBytes);
     italicFont = await pdfDoc.embedFont(italicBytes);
-    console.log('✅ Fonts embedded');
+    await sendLiveLog('✅ Fonts embedded');
   } catch (e) {
+    await sendLiveLog('🚨 Font embedding failed: ' + String(e));
     console.error('🚨 Font embedding failed:', e);
     throw new Error('Font embedding failed');
   }
@@ -51,18 +62,19 @@ export async function generatePDF(text: string): Promise<Uint8Array> {
   try {
     const logoPath = path.join(process.cwd(), 'public', 'mythara-logo.png');
     const logoBytes = await fs.readFile(logoPath);
-    console.log('🖼️ Logo bytes loaded:', logoBytes.byteLength);
+    await sendLiveLog(`🖼️ Logo bytes loaded: ${logoBytes.byteLength}`);
 
     logoImage = await pdfDoc.embedPng(logoBytes);
     logoDims = logoImage.scale(150 / logoImage.width);
-    console.log('✅ Logo embedded');
+    await sendLiveLog('✅ Logo embedded');
   } catch (e) {
+    await sendLiveLog('🚨 Logo embed failed: ' + String(e));
     console.error('🚨 Logo embed failed:', e);
     throw new Error('Logo embedding failed');
   }
 
   try {
-    console.log('📝 Starting PDF content rendering...');
+    await sendLiveLog('📝 Starting PDF content rendering...');
     let page = pdfDoc.addPage([pageWidth, pageHeight]);
     let y = pageHeight - margin;
 
@@ -208,9 +220,11 @@ Welcome to your personalized Mythara travel itinerary! We are thrilled to be a p
     }
 
     console.timeEnd('📄 generatePDF()');
+    await sendLiveLog('✅ PDF generation complete');
     return await pdfDoc.save();
   } catch (pdfError) {
     console.error('❌ PDF generation failed:', pdfError);
+    await sendLiveLog('❌ PDF generation failed: ' + String(pdfError));
     throw new Error('PDF generation failed');
   }
 }
