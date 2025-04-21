@@ -1,74 +1,47 @@
-// app/api/sendEmail/route.ts
+// Force this API to run on Node.js (60 sec timeout), not Edge (10 sec)
+export const config = {
+  runtime: 'nodejs',
+  regions: ['iad1'],  // optional, pin to your region
+};
+
 import { NextRequest, NextResponse } from 'next/server';
 import { createPromptFromSurvey, SurveyData } from '@/lib/createPromptFromSurvey';
 import OpenAI from 'openai';
 import { generatePDF } from '@/lib/generatePDF';
 import { sendEmailWithPDF } from '@/lib/sendEmailWithPDF';
 
-// deploy as Node.js lambda (60s limit)
-export const config = { runtime: 'nodejs', regions: ['iad1'] };
-
-// initialize once outside handler
 const ai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
 export async function POST(req: NextRequest) {
   try {
-    // 1) Parse & type the body
-    const body = (await req.json()) as {
+    const { email, surveyAnswers: raw } = (await req.json()) as {
       email?: string;
-      surveyAnswers?: string | SurveyData;
+      surveyAnswers?: SurveyData;
     };
-    const { email, surveyAnswers: surveyRaw } = body;
-
-    // 2) Guard against missing or invalid data
-    if (!email || !surveyRaw) {
-      return NextResponse.json(
-        { error: 'Missing email or survey data' },
-        { status: 400 }
-      );
+    if (!email || !raw) {
+      return NextResponse.json({ error: 'Missing data' }, { status: 400 });
     }
-
-    // TS now knows `email` is a string
-    // 3) Parse surveyAnswers if it arrived as JSON string
-    const surveyData: SurveyData =
-      typeof surveyRaw === 'string'
-        ? JSON.parse(surveyRaw)
-        : surveyRaw;
-
-    // 4) Build the prompt
-    const prompt = createPromptFromSurvey(surveyData);
-
-    // 5) Call OpenAI (Node.js runtime = 60s)
+    const prompt = createPromptFromSurvey(
+      typeof raw === 'string' ? JSON.parse(raw) : raw
+    );
     const resp = await ai.chat.completions.create({
       model: 'gpt-4',
       messages: [{ role: 'user', content: prompt }],
       max_tokens: 2000,
       temperature: 0.7,
     });
-    if (!resp.choices?.length) {
-      throw new Error('OpenAI returned no choices');
-    }
-    const gptText = resp.choices[0].message.content;
-
-    // 6) Generate the PDF
-    const pdfBytes = await generatePDF(gptText!);
+    if (!resp.choices?.length) throw new Error('No GPT response');
+    const text = resp.choices[0].message.content!;
+    const pdfBytes = await generatePDF(text);
     const pdfBuffer = Buffer.from(pdfBytes);
-
-    // 7) Email the PDF
     await sendEmailWithPDF(email, pdfBuffer);
-
-    // 8) Success
-    return NextResponse.json({ message: 'Email sent successfully!' });
+    return NextResponse.json({ message: 'Email sent!' });
   } catch (err: unknown) {
     console.error('❌ sendEmail error:', err);
     let errorMessage = 'Internal error';
     if (typeof err === 'object' && err !== null && 'message' in err) {
       errorMessage = (err as { message?: string }).message ?? errorMessage;
     }
-    return NextResponse.json(
-      { error: errorMessage },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
-
 }
