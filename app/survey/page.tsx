@@ -1,7 +1,6 @@
 "use client";
 import { useRouter } from "next/navigation";
 import React, { useState, useEffect } from "react";
-import { DndContext, closestCenter } from "@dnd-kit/core";
 import {
   arrayMove,
   SortableContext,
@@ -10,8 +9,17 @@ import {
 import { SortableItem } from "../components/SortableItem";
 import { Progress } from "../components/ui/progress";
 import type { DragEndEvent } from "@dnd-kit/core";
+import {
+  DndContext,
+  closestCenter,
+  useSensor,
+  useSensors,
+  TouchSensor,
+  MouseSensor,
+} from "@dnd-kit/core";
+import { restrictToVerticalAxis } from "@dnd-kit/modifiers";
+import { UniqueIdentifier } from "@dnd-kit/core";
 
-// Travel interest data with descriptions
 const travelInterests = [
   {
     id: "cultural",
@@ -50,6 +58,7 @@ const travelInterests = [
       "Get swept up in color, music, and joy — India’s festivals aren’t watched, they’re lived.",
   },
 ];
+
 const subSegments: Record<string, string[]> = {
   cultural: [
     "Walk through ancient forts and palaces",
@@ -71,7 +80,7 @@ const subSegments: Record<string, string[]> = {
     "Spot wildlife in a national park",
     "Camp under the stars in scenic locations",
     "Explore caves, canyons, or surreal landscapes",
-    "Snorkel/Dive/Surf across India's pristine beaches"
+    "Snorkel/Dive/Surf across India's pristine beaches",
   ],
   beach: [
     "Relax on quiet, scenic beaches",
@@ -97,13 +106,13 @@ const subSegments: Record<string, string[]> = {
   ],
 };
 
-// Initial state setup for the survey
 export default function SurveyPage() {
-  const [step, setStep] = useState(1); // Tracks the current step
-  const router = useRouter(); // For navigation
+  const [step, setStep] = useState(1);
+  const router = useRouter();
+  const [activeId, setActiveId] = useState<UniqueIdentifier | null>(null);
   const [orderedItems, setOrderedItems] = useState(
     travelInterests.map((item) => item.id)
-  ); // Stores drag-and-drop order
+  );
   const [answers, setAnswers] = useState({
     country: "",
     group: "",
@@ -121,18 +130,26 @@ export default function SurveyPage() {
     notes: "",
   });
 
-  const [isClient, setIsClient] = useState(false); // Ensures client-only rendering
+  const [isClient, setIsClient] = useState(false);
 
-useEffect(() => {
-  setIsClient(true); // Ensures the `DndContext` is rendered only on the client
-}, []);
+  // Always call hooks in the same order
+  const mouseSensor = useSensor(MouseSensor);
+  const touchSensor = useSensor(TouchSensor, {
+    activationConstraint: {
+      delay: 150,
+      tolerance: 5,
+    },
+  });
+  const sensors = useSensors(mouseSensor, touchSensor);
 
-  // Handler for input changes
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
   const handleInput = (key: string, val: string) => {
     setAnswers((prev) => ({ ...prev, [key]: val }));
   };
 
-  // Handler for drag-and-drop ranking
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
     if (over && active.id !== over.id) {
@@ -144,8 +161,9 @@ useEffect(() => {
         )
       );
     }
+    setActiveId(null);
   };
-  // Handler for drag-and-drop ranking for sub-segments
+
   const handleSubDragEnd = (key: string, event: DragEndEvent) => {
     const { active, over } = event;
     if (over && active.id !== over.id) {
@@ -161,26 +179,23 @@ useEffect(() => {
     }
   };
 
-  // Navigation handlers
   const handleContinue = () => {
     if (step === 1) {
-      // Capture the top 3 ranked interests
       const topSegments = orderedItems.slice(0, 3);
       const subPrefs = topSegments.reduce((acc, segment) => {
-        // Initialize subPrefs for each top segment
         acc[segment] = subSegments[segment] || [];
         return acc;
       }, {} as Record<string, string[]>);
-  
+
       setAnswers((prev) => ({
         ...prev,
         topSegments,
         subPrefs,
       }));
     }
-  
     setStep((prev) => prev + 1);
   };
+
   const handleBack = () => setStep((prev) => Math.max(prev - 1, 1));
 
   return (
@@ -188,7 +203,8 @@ useEffect(() => {
       {/* Progress Bar */}
       <Progress value={(step / 11) * 100} className="mb-6" />
 
-      {/* Step 1: Travel Interests */}
+
+{/* Step 1: Travel Interests */}
 {step === 1 && (
   <div>
     <h1 className="text-2xl font-semibold mb-2">
@@ -197,31 +213,36 @@ useEffect(() => {
     <p className="mb-4 text-gray-600">
       Drag and drop to rank your top 3 — most exciting at the top.
     </p>
-    {isClient && ( // Render DndContext only on the client
-      <DndContext collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+    {isClient && (
+      <DndContext
+        sensors={sensors} // Reuse the sensors created above
+        collisionDetection={closestCenter}
+        modifiers={[restrictToVerticalAxis]}
+        onDragStart={(e) => setActiveId(e.active.id)} // Set activeId when dragging starts
+        onDragEnd={handleDragEnd} // Use the shared handler for drag-and-drop
+      >
         <SortableContext
           items={orderedItems}
           strategy={verticalListSortingStrategy}
         >
-         {orderedItems.map((id, index) => {
-      const item = travelInterests.find((i) => i.id === id)!;
-      return (
-        <SortableItem key={item.id} id={item.id}>
-          <div className="px-4 py-3 border rounded-md mb-2 bg-gray-50">
-            {/* Adjust layout for mobile and desktop */}
-            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-x-4">
-              {/* Number */}
-              <span className="text-sm font-bold flex-shrink-0">{index + 1}</span>
-              {/* Text */}
-              <div>
-                <p className="text-sm font-medium">{item.label}</p>
-                <p className="text-xs text-gray-600">{item.description}</p>
-              </div>
-            </div>
-          </div>
-        </SortableItem>
-     );
-    })}
+          {orderedItems.map((id, index) => {
+            const item = travelInterests.find((i) => i.id === id)!;
+            return (
+              <SortableItem key={item.id} id={item.id}>
+                <div className="px-4 py-3 border rounded-md mb-2 bg-gray-50 touch-none">
+                  <div className="flex items-start sm:items-center gap-x-4">
+                    {/* Number */}
+                    <span className="text-sm font-bold flex-shrink-0">{index + 1}</span>
+                    {/* Text */}
+                    <div>
+                      <p className="text-sm font-medium">{item.label}</p>
+                      <p className="text-xs text-gray-600">{item.description}</p>
+                    </div>
+                  </div>
+                </div>
+              </SortableItem>
+            );
+          })}
         </SortableContext>
       </DndContext>
     )}
@@ -568,16 +589,15 @@ useEffect(() => {
       </div>
     </div>
   )}
- {/* Steps 8–10: Sub-Segment Rankings */}
+{/* Steps 8–10: Sub-Segment Rankings */}
 {[8, 9, 10].includes(step) && (
   <div>
     <h2 className="text-2xl font-semibold mb-4">
       What kind of experiences are you most excited about in{" "}
       <span className="capitalize text-blue-700 font-bold">
         {
-          travelInterests.find(
-            (item) => item.id === answers.topSegments[step - 8]
-          )?.label
+          travelInterests.find((item) => item.id === answers.topSegments[step - 8])
+            ?.label
         }
       </span>
       ?
