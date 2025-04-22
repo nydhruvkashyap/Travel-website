@@ -18,7 +18,6 @@ import {
   MouseSensor,
 } from "@dnd-kit/core";
 import { restrictToVerticalAxis } from "@dnd-kit/modifiers";
-import { UniqueIdentifier } from "@dnd-kit/core";
 
 const travelInterests = [
   {
