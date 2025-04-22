@@ -109,7 +109,6 @@ const subSegments: Record<string, string[]> = {
 export default function SurveyPage() {
   const [step, setStep] = useState(1);
   const router = useRouter();
-  const [activeId, setActiveId] = useState<UniqueIdentifier | null>(null);
   const [orderedItems, setOrderedItems] = useState(
     travelInterests.map((item) => item.id)
   );
@@ -161,7 +160,6 @@ export default function SurveyPage() {
         )
       );
     }
-    setActiveId(null);
   };
 
   const handleSubDragEnd = (key: string, event: DragEndEvent) => {
@@ -218,7 +216,7 @@ export default function SurveyPage() {
         sensors={sensors} // Reuse the sensors created above
         collisionDetection={closestCenter}
         modifiers={[restrictToVerticalAxis]}
-        onDragStart={(e) => setActiveId(e.active.id)} // Set activeId when dragging starts
+        onDragStart={() => {}} // Or remove the `onDragStart` handler entirely if it’s not needed
         onDragEnd={handleDragEnd} // Use the shared handler for drag-and-drop
       >
         <SortableContext
