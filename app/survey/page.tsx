@@ -167,25 +167,6 @@ export default function SurveyPage() {
     }
   };
 
-  const handleSubDragEnd = (key: string, event: DragEndEvent) => {
-    const { active, over } = event;
-    if (over && active.id !== over.id) {
-      setAnswers((prev) => {
-        const newList = arrayMove(
-          prev.subPrefs[key],
-          prev.subPrefs[key].indexOf(active.id as string),
-          prev.subPrefs[key].indexOf(over.id as string)
-        );
-        return {
-          ...prev,
-          subPrefs: {
-            ...prev.subPrefs,
-            [key]: [...newList], // Ensure immutability by creating a new array
-          },
-        };
-      });
-    }
-  };
 
   const handleContinue = () => {
     if (step === 1) {
