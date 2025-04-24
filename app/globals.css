@@ -29,3 +29,9 @@ a:hover {
 .animate-bounce-slow {
   animation: bounce-slow 3s infinite;
 }
+
+/* Ensure touch events propagate properly */
+.sortable-item {
+  touch-action: manipulation;
+  pointer-events: auto;
+}

@@ -180,7 +180,7 @@ export default function SurveyPage() {
           ...prev,
           subPrefs: {
             ...prev.subPrefs,
-            [key]: newList,
+            [key]: [...newList], // Ensure immutability by creating a new array
           },
         };
       });
@@ -622,40 +622,67 @@ export default function SurveyPage() {
           </p>
           {isClient && (
             <DndContext
-              collisionDetection={closestCenter}
-              //modifiers={[restrictToVerticalAxis]} // Remove this line to test touch behavior
-              onDragStart={(event: DragStartEvent) =>
-                setDraggedItemId(event.active.id as string)
+            sensors={sensors}
+            collisionDetection={(args) => {
+              // Use closest center as the strategy, but log for debugging
+              const collisionResult = closestCenter(args);
+              console.log("Collision Detection Result:", collisionResult); // Debugging
+              return collisionResult;
+            }}
+            onDragStart={(event: DragStartEvent) => {
+              setDraggedItemId(event.active.id as string);
+            }}
+            onDragEnd={(event: DragEndEvent) => {
+              const { active, over } = event;
+          
+              console.log("Drag End - Active ID:", active.id, "Over ID:", over?.id); // Debugging
+          
+              setDraggedItemId(null); // Clear dragged item ID
+          
+              // Ensure the `over` target is recognized
+              if (over && active.id !== over.id) {
+                setAnswers((prev) => {
+                  const key = answers.topSegments[step - 8]; // Current segment key
+                  const newList = arrayMove(
+                    prev.subPrefs[key],
+                    prev.subPrefs[key].indexOf(active.id as string),
+                    prev.subPrefs[key].indexOf(over.id as string)
+                  );
+                  return {
+                    ...prev,
+                    subPrefs: {
+                      ...prev.subPrefs,
+                      [key]: [...newList], // Ensure immutability
+                    },
+                  };
+                });
               }
-              onDragEnd={(event: DragEndEvent) => {
-                setDraggedItemId(null);
-                handleSubDragEnd(answers.topSegments[step - 8], event);
-              }}
+            }}
+          >
+            <SortableContext
+              items={currentItems} // Ensure this matches current segment
+              strategy={verticalListSortingStrategy}
             >
-              <SortableContext
-                items={currentItems}
-                strategy={verticalListSortingStrategy}
-              >
-                {currentItems.map((item: string, index: number) => (
-                  <SortableItem key={item} id={item}>
-                    <div
-                      className={`px-4 py-3 border rounded-md mb-2 ${
-                        draggedItemId === item
-                          ? "bg-blue-100 border-blue-400"
-                          : "bg-gray-50"
-                      }`}
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="text-sm font-bold w-6 text-center">
-                          {index + 1}
-                        </div>
-                        <div className="text-sm text-gray-800">{item}</div>
+              {currentItems.map((item: string, index: number) => (
+                <SortableItem key={item} id={item}>
+                  <div
+                    className={`px-4 py-3 border rounded-md mb-2 ${
+                      draggedItemId === item
+                        ? "bg-blue-100 border-blue-400" // Highlight dragged item
+                        : "bg-gray-50"
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="text-sm font-bold w-6 text-center">
+                        {index + 1}
                       </div>
+                      <div className="text-sm text-gray-800">{item}</div>
                     </div>
-                  </SortableItem>
-                ))}
-              </SortableContext>
-            </DndContext>
+                  </div>
+                </SortableItem>
+              ))}
+            </SortableContext>
+          </DndContext>
           )}
           <div className="mt-6 flex justify-between">
             <button
