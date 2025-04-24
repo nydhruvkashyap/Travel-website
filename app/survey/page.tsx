@@ -245,7 +245,7 @@ export default function SurveyPage() {
                           </span>
                           {/* Text */}
                           <div>
-                            <p className="text-sm font-medium">{item.label}</p>
+                            <p className="text-sm font-bold">{item.label}</p>
                             <p className="text-xs text-gray-600">
                               {item.description}
                             </p>
@@ -377,7 +377,7 @@ export default function SurveyPage() {
       This helps us shape your itinerary to match how you love to travel.
     </p>
     <div className="flex flex-col gap-3">
-      {[
+      {[ // Travel options
         {
           label: "Curious Explorer",
           description:
@@ -399,40 +399,25 @@ export default function SurveyPage() {
             "You’re looking for premium accommodations, curated experiences, and high-end services.",
         },
       ].map((option) => (
-        <label
+        <div
           key={option.label}
-          className="flex flex-col sm:flex-row items-start sm:items-center p-3 border border-gray-300 rounded-xl bg-gray-50 hover:bg-gray-100 cursor-pointer"
+          onClick={() => handleInput("style", option.label)}
+          className={`p-4 border rounded-lg cursor-pointer ${
+            answers.style === option.label
+              ? "bg-blue-100 border-blue-500" // Highlight selected option
+              : "bg-gray-50 border-gray-300"
+          }`}
+          role="button"
+          aria-pressed={answers.style === option.label}
         >
-          <input
-            type="radio"
-            name="travel-style"
-            value={option.label}
-            checked={answers.style === option.label}
-            onChange={() => handleInput("style", option.label)}
-            className="mt-1 mr-3 sm:mr-4 accent-blue-600"
-          />
-          <div className="w-full">
-            <div className="font-bold text-gray-800 text-sm sm:text-base">
-              {option.label}
-            </div>
-            <div className="text-xs sm:text-sm text-gray-600 mt-1 sm:mt-0">
-              {option.description}
-            </div>
+          <div className="font-bold text-gray-800 text-base">
+            {option.label}
           </div>
-        </label>
+          <div className="text-sm text-gray-600 mt-1">
+            {option.description}
+          </div>
+        </div>
       ))}
-    </div>
-    <div className="mt-6">
-      <label className="block text-sm font-medium text-gray-700 mb-1">
-        Do you have any weather-related preferences or sensitivities that we
-        should know about?
-      </label>
-      <textarea
-        value={answers.weatherNote}
-        onChange={(e) => handleInput("weatherNote", e.target.value)}
-        placeholder='Optional: e.g., "Prefer cooler climates", "Avoid humidity", "Love misty hills", "Hate heavy rain"...'
-        className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm min-h-[80px]"
-      />
     </div>
     <div className="mt-6 flex justify-between">
       <button
@@ -444,6 +429,7 @@ export default function SurveyPage() {
       <button
         onClick={handleContinue}
         className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700"
+        disabled={!answers.style} // Disable until a selection is made
       >
         Continue
       </button>
@@ -623,7 +609,7 @@ export default function SurveyPage() {
     <p className="mb-4 text-gray-600">
       Drag and drop to rank the activities that excite you the most — your top pick should come first.
     </p>
-    {isClient && ( // Render DndContext only on the client
+    {isClient && (
       <DndContext
         collisionDetection={closestCenter}
         modifiers={[restrictToVerticalAxis]}
@@ -639,7 +625,7 @@ export default function SurveyPage() {
           items={answers.subPrefs[answers.topSegments[step - 8]] || []}
           strategy={verticalListSortingStrategy}
         >
-          {answers.subPrefs[answers.topSegments[step - 8]]?.map((item, index) => (
+          {(answers.subPrefs[answers.topSegments[step - 8]] || []).map((item, index) => (
             <SortableItem key={item} id={item}>
               <div
                 className={`px-4 py-3 border rounded-md mb-2 ${
