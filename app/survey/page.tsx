@@ -601,70 +601,79 @@ export default function SurveyPage() {
 {/* Steps 8–10: Sub-Segment Rankings */}
 {[8, 9, 10].includes(step) && (
   <div>
-    <h2 className="text-2xl font-semibold mb-4">
-      What kind of experiences are you most excited about in{" "}
-      <span className="capitalize text-blue-700 font-bold">
-        {
-          travelInterests.find((item) => item.id === answers.topSegments[step - 8])
-            ?.label
-        }
-      </span>
-      ?
-    </h2>
-    <p className="mb-4 text-gray-600">
-      Drag and drop to rank the activities that excite you the most — your top pick should come first.
-    </p>
-    {isClient && (
-      <DndContext
-        collisionDetection={closestCenter}
-        modifiers={[restrictToVerticalAxis]}
-        onDragStart={(event: DragStartEvent) =>
-          setDraggedItemId(event.active.id as string)
-        }
-        onDragEnd={(event: DragEndEvent) => {
-          setDraggedItemId(null); // Clear the dragged item ID
-          handleSubDragEnd(answers.topSegments[step - 8], event);
-        }}
-      >
-        <SortableContext
-          items={answers.subPrefs[answers.topSegments[step - 8]] || []}
-          strategy={verticalListSortingStrategy}
-        >
-          {(answers.subPrefs[answers.topSegments[step - 8]] || []).map((item, index) => (
-            <SortableItem key={item} id={item}>
-              <div
-                className={`px-4 py-3 border rounded-md mb-2 ${
-                  draggedItemId === item
-                    ? "bg-blue-100 border-blue-400" // Highlight dragged item
-                    : "bg-gray-50"
-                }`}
+    {/* Define `currentItems` here */}
+    {(() => {
+      const currentItems = answers.subPrefs[answers.topSegments[step - 8]] || [];
+      return (
+        <>
+          <h2 className="text-2xl font-semibold mb-4">
+            What kind of experiences are you most excited about in{" "}
+            <span className="capitalize text-blue-700 font-bold">
+              {
+                travelInterests.find(
+                  (item) => item.id === answers.topSegments[step - 8]
+                )?.label
+              }
+            </span>
+            ?
+          </h2>
+          <p className="mb-4 text-gray-600">
+            Drag and drop to rank the activities that excite you the most — your top pick should come first.
+          </p>
+          {isClient && (
+            <DndContext
+              collisionDetection={closestCenter}
+              modifiers={[restrictToVerticalAxis]} // Remove this line to test touch behavior
+              onDragStart={(event: DragStartEvent) =>
+                setDraggedItemId(event.active.id as string)
+              }
+              onDragEnd={(event: DragEndEvent) => {
+                setDraggedItemId(null);
+                handleSubDragEnd(answers.topSegments[step - 8], event);
+              }}
+            >
+              <SortableContext
+                items={currentItems}
+                strategy={verticalListSortingStrategy}
               >
-                <div className="flex items-center gap-3">
-                  <div className="text-sm font-bold w-6 text-center">
-                    {index + 1}
-                  </div>
-                  <div className="text-sm text-gray-800">{item}</div>
-                </div>
-              </div>
-            </SortableItem>
-          ))}
-        </SortableContext>
-      </DndContext>
-    )}
-    <div className="mt-6 flex justify-between">
-      <button
-        onClick={handleBack}
-        className="bg-gray-200 text-gray-800 px-6 py-2 rounded-lg hover:bg-gray-300"
-      >
-        Back
-      </button>
-      <button
-        onClick={handleContinue}
-        className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700"
-      >
-        Continue
-      </button>
-    </div>
+                {currentItems.map((item: string, index: number) => (
+                  <SortableItem key={item} id={item}>
+                    <div
+                      className={`px-4 py-3 border rounded-md mb-2 ${
+                        draggedItemId === item
+                          ? "bg-blue-100 border-blue-400"
+                          : "bg-gray-50"
+                      }`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="text-sm font-bold w-6 text-center">
+                          {index + 1}
+                        </div>
+                        <div className="text-sm text-gray-800">{item}</div>
+                      </div>
+                    </div>
+                  </SortableItem>
+                ))}
+              </SortableContext>
+            </DndContext>
+          )}
+          <div className="mt-6 flex justify-between">
+            <button
+              onClick={handleBack}
+              className="bg-gray-200 text-gray-800 px-6 py-2 rounded-lg hover:bg-gray-300"
+            >
+              Back
+            </button>
+            <button
+              onClick={handleContinue}
+              className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700"
+            >
+              Continue
+            </button>
+          </div>
+        </>
+      );
+    })()}
   </div>
 )}
   {/* Step 11: Final Notes */}
