@@ -134,14 +134,22 @@ export default function AdventureTourism() {
             </Link>.
           </p>
         </div>
-      </div>
 
-      {/* Enhanced Floating Trip Planner CTA */}
-      <Link href="/trip-planner" className="fixed bottom-16 sm:bottom-6 right-4 sm:right-6 z-50">
-        <div className="bg-gray-900 hover:bg-gray-800 text-white shadow-2xl rounded-xl px-4 py-2 flex items-center gap-2 cursor-pointer transition-all animate-bounce-slow">
-          <span className="text-lg font-semibold">✨ Create Your Itinerary</span>
+        {/* Stationary Call-to-Action */}
+        <div className="mt-16 text-center">
+          <h3 className="text-3xl font-semibold mb-4 font-playfair">Your Next Adventure Starts Here</h3>
+          <p className="mb-6">
+            <span className="text-xl leading-relaxed">
+              At Mythara, we help you find the perfect expedition—whether you&rsquo;re looking for an adrenaline-packed journey or a slow exploration of India&rsquo;s most breathtaking landscapes.
+            </span>
+          </p>
+          <Link href="/trip-planner">
+            <button className="bg-yellow-600 text-white px-6 py-3 rounded-lg hover:bg-yellow-700">
+              Create Your Itinerary
+            </button>
+          </Link>
         </div>
-      </Link>
+      </div>
     </div>
   );
 }
