@@ -8,7 +8,7 @@ import {
 } from "@dnd-kit/sortable";
 import { SortableItem } from "../components/SortableItem";
 import { Progress } from "../components/ui/progress";
-import type { DragEndEvent } from "@dnd-kit/core";
+import type { DragEndEvent, DragStartEvent } from "@dnd-kit/core";
 import {
   DndContext,
   closestCenter,
@@ -111,6 +111,7 @@ export default function SurveyPage() {
   const [orderedItems, setOrderedItems] = useState(
     travelInterests.map((item) => item.id)
   );
+  const [draggedItemId, setDraggedItemId] = useState<string | null>(null); // Track the currently dragged item
   const [answers, setAnswers] = useState({
     country: "",
     group: "",
@@ -134,8 +135,8 @@ export default function SurveyPage() {
   const mouseSensor = useSensor(MouseSensor);
   const touchSensor = useSensor(TouchSensor, {
     activationConstraint: {
-      delay: 150,
-      tolerance: 5,
+      delay: 150, // Short delay before dragging starts
+      tolerance: 5, // Allow small movements without triggering drag
     },
   });
   const sensors = useSensors(mouseSensor, touchSensor);
@@ -148,8 +149,13 @@ export default function SurveyPage() {
     setAnswers((prev) => ({ ...prev, [key]: val }));
   };
 
+  const handleDragStart = (event: DragStartEvent) => {
+    setDraggedItemId(event.active.id as string); // Set the dragged item ID
+  };
+
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
+    setDraggedItemId(null); // Clear the dragged item ID
     if (over && active.id !== over.id) {
       setOrderedItems((items) =>
         arrayMove(
@@ -200,59 +206,68 @@ export default function SurveyPage() {
       {/* Progress Bar */}
       <Progress value={(step / 11) * 100} className="mb-6" />
 
-
-{/* Step 1: Travel Interests */}
-{step === 1 && (
-  <div>
-    <h1 className="text-2xl font-semibold mb-2">
-      What kind of travel excites you most in India?
-    </h1>
-    <p className="mb-4 text-gray-600">
-      Drag and drop to rank your top 3 — most exciting at the top.
-    </p>
-    {isClient && (
-      <DndContext
-        sensors={sensors} // Reuse the sensors created above
-        collisionDetection={closestCenter}
-        modifiers={[restrictToVerticalAxis]}
-        onDragStart={() => {}} // Or remove the `onDragStart` handler entirely if it’s not needed
-        onDragEnd={handleDragEnd} // Use the shared handler for drag-and-drop
-      >
-        <SortableContext
-          items={orderedItems}
-          strategy={verticalListSortingStrategy}
-        >
-          {orderedItems.map((id, index) => {
-            const item = travelInterests.find((i) => i.id === id)!;
-            return (
-              <SortableItem key={item.id} id={item.id}>
-                <div className="px-4 py-3 border rounded-md mb-2 bg-gray-50 touch-none">
-                  <div className="flex items-start sm:items-center gap-x-4">
-                    {/* Number */}
-                    <span className="text-sm font-bold flex-shrink-0">{index + 1}</span>
-                    {/* Text */}
-                    <div>
-                      <p className="text-sm font-medium">{item.label}</p>
-                      <p className="text-xs text-gray-600">{item.description}</p>
-                    </div>
-                  </div>
-                </div>
-              </SortableItem>
-            );
-          })}
-        </SortableContext>
-      </DndContext>
-    )}
-    <div className="mt-6 flex justify-end">
-      <button
-        onClick={handleContinue}
-        className="bg-blue-600 text-white px-5 py-2 rounded-lg hover:bg-blue-700"
-      >
-        Continue
-      </button>
-    </div>
-  </div>
-)}
+      {/* Step 1: Travel Interests */}
+      {step === 1 && (
+        <div>
+          <h1 className="text-2xl font-semibold mb-2">
+            What kind of travel excites you most in India?
+          </h1>
+          <p className="mb-4 text-gray-600">
+            Drag and drop to rank your top 3 — most exciting at the top.
+          </p>
+          {isClient && (
+            <DndContext
+              sensors={sensors}
+              collisionDetection={closestCenter}
+              modifiers={[restrictToVerticalAxis]}
+              onDragStart={handleDragStart}
+              onDragEnd={handleDragEnd}
+            >
+              <SortableContext
+                items={orderedItems}
+                strategy={verticalListSortingStrategy}
+              >
+                {orderedItems.map((id, index) => {
+                  const item = travelInterests.find((i) => i.id === id)!;
+                  return (
+                    <SortableItem key={item.id} id={item.id}>
+                      <div
+                        className={`px-4 py-3 border rounded-md mb-2 ${
+                          draggedItemId === item.id
+                            ? "bg-blue-100 border-blue-400" // Highlight dragged item
+                            : "bg-gray-50"
+                        }`}
+                      >
+                        <div className="flex items-start sm:items-center gap-x-4">
+                          {/* Number */}
+                          <span className="text-sm font-bold flex-shrink-0">
+                            {index + 1}
+                          </span>
+                          {/* Text */}
+                          <div>
+                            <p className="text-sm font-medium">{item.label}</p>
+                            <p className="text-xs text-gray-600">
+                              {item.description}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    </SortableItem>
+                  );
+                })}
+              </SortableContext>
+            </DndContext>
+          )}
+          <div className="mt-6 flex justify-end">
+            <button
+              onClick={handleContinue}
+              className="bg-blue-600 text-white px-5 py-2 rounded-lg hover:bg-blue-700"
+            >
+              Continue
+            </button>
+          </div>
+        </div>
+      )}
       {/* Step 2: Country */}
       {step === 2 && (
         <div>
@@ -353,14 +368,15 @@ export default function SurveyPage() {
     </div>
   )}
   {/* Step 4: Travel Style */}
-  {step === 4 && (
-    <div>
-      <h2 className="text-2xl font-semibold mb-4">
-        How would you describe your travel style?
-      </h2>
-      <p className="text-gray-600 mb-4">
-        This helps us shape your itinerary to match how you love to travel.
-      </p>
+{step === 4 && (
+  <div>
+    <h2 className="text-2xl font-semibold mb-4">
+      How would you describe your travel style?
+    </h2>
+    <p className="text-gray-600 mb-4">
+      This helps us shape your itinerary to match how you love to travel.
+    </p>
+    <div className="flex flex-col gap-3">
       {[
         {
           label: "Curious Explorer",
@@ -385,7 +401,7 @@ export default function SurveyPage() {
       ].map((option) => (
         <label
           key={option.label}
-          className="flex items-start mb-3 p-3 border border-gray-300 rounded-xl bg-gray-50 hover:bg-gray-100 cursor-pointer"
+          className="flex flex-col sm:flex-row items-start sm:items-center p-3 border border-gray-300 rounded-xl bg-gray-50 hover:bg-gray-100 cursor-pointer"
         >
           <input
             type="radio"
@@ -393,42 +409,47 @@ export default function SurveyPage() {
             value={option.label}
             checked={answers.style === option.label}
             onChange={() => handleInput("style", option.label)}
-            className="mt-1 mr-4 accent-blue-600"
+            className="mt-1 mr-3 sm:mr-4 accent-blue-600"
           />
-          <div className="grid grid-cols-[180px_1fr] gap-4">
-            <div className="font-medium text-gray-800">{option.label}</div>
-            <div className="text-sm text-gray-600">{option.description}</div>
+          <div className="w-full">
+            <div className="font-bold text-gray-800 text-sm sm:text-base">
+              {option.label}
+            </div>
+            <div className="text-xs sm:text-sm text-gray-600 mt-1 sm:mt-0">
+              {option.description}
+            </div>
           </div>
         </label>
       ))}
-      <div className="mt-6">
-        <label className="block text-sm font-medium text-gray-700 mb-1">
-          Do you have any weather-related preferences or sensitivities that we
-          should know about?
-        </label>
-        <textarea
-          value={answers.weatherNote}
-          onChange={(e) => handleInput("weatherNote", e.target.value)}
-          placeholder='Optional: e.g., "Prefer cooler climates", "Avoid humidity", "Love misty hills", "Hate heavy rain"...'
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm min-h-[80px]"
-        />
-      </div>
-      <div className="mt-6 flex justify-between">
-        <button
-          onClick={handleBack}
-          className="bg-gray-200 text-gray-800 px-6 py-2 rounded-lg hover:bg-gray-300"
-        >
-          Back
-        </button>
-        <button
-          onClick={handleContinue}
-          className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700"
-        >
-          Continue
-        </button>
-      </div>
     </div>
-  )}
+    <div className="mt-6">
+      <label className="block text-sm font-medium text-gray-700 mb-1">
+        Do you have any weather-related preferences or sensitivities that we
+        should know about?
+      </label>
+      <textarea
+        value={answers.weatherNote}
+        onChange={(e) => handleInput("weatherNote", e.target.value)}
+        placeholder='Optional: e.g., "Prefer cooler climates", "Avoid humidity", "Love misty hills", "Hate heavy rain"...'
+        className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm min-h-[80px]"
+      />
+    </div>
+    <div className="mt-6 flex justify-between">
+      <button
+        onClick={handleBack}
+        className="bg-gray-200 text-gray-800 px-6 py-2 rounded-lg hover:bg-gray-300"
+      >
+        Back
+      </button>
+      <button
+        onClick={handleContinue}
+        className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700"
+      >
+        Continue
+      </button>
+    </div>
+  </div>
+)}
  {/* Step 5: Budget */}
 {step === 5 && (
   <div>
@@ -605,9 +626,14 @@ export default function SurveyPage() {
     {isClient && ( // Render DndContext only on the client
       <DndContext
         collisionDetection={closestCenter}
-        onDragEnd={(e: DragEndEvent) =>
-          handleSubDragEnd(answers.topSegments[step - 8], e)
+        modifiers={[restrictToVerticalAxis]}
+        onDragStart={(event: DragStartEvent) =>
+          setDraggedItemId(event.active.id as string)
         }
+        onDragEnd={(event: DragEndEvent) => {
+          setDraggedItemId(null); // Clear the dragged item ID
+          handleSubDragEnd(answers.topSegments[step - 8], event);
+        }}
       >
         <SortableContext
           items={answers.subPrefs[answers.topSegments[step - 8]] || []}
@@ -615,7 +641,13 @@ export default function SurveyPage() {
         >
           {answers.subPrefs[answers.topSegments[step - 8]]?.map((item, index) => (
             <SortableItem key={item} id={item}>
-              <div className="px-4 py-3 border rounded-md mb-2 bg-gray-50">
+              <div
+                className={`px-4 py-3 border rounded-md mb-2 ${
+                  draggedItemId === item
+                    ? "bg-blue-100 border-blue-400" // Highlight dragged item
+                    : "bg-gray-50"
+                }`}
+              >
                 <div className="flex items-center gap-3">
                   <div className="text-sm font-bold w-6 text-center">
                     {index + 1}
