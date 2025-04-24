@@ -137,21 +137,11 @@ export default function AdventureTourism() {
       </div>
 
       {/* Enhanced Floating Trip Planner CTA */}
-      <Link href="/trip-planner" className="fixed bottom-6 right-6 z-50 floating-bubble">
+      <Link href="/trip-planner" className="fixed bottom-16 sm:bottom-6 right-4 sm:right-6 z-50">
         <div className="bg-gray-900 hover:bg-gray-800 text-white shadow-2xl rounded-xl px-4 py-2 flex items-center gap-2 cursor-pointer transition-all animate-bounce-slow">
           <span className="text-lg font-semibold">✨ Create Your Itinerary</span>
         </div>
       </Link>
-
-      {/* Mobile Styles */}
-      <style jsx global>{`
-        @media (max-width: 640px) {
-          .floating-bubble {
-            bottom: 4rem;
-            right: 1rem;
-          }
-        }
-      `}</style>
     </div>
   );
 }
