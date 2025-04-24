@@ -170,30 +170,35 @@ export default function SurveyPage() {
   const handleSubDragEnd = (key: string, event: DragEndEvent) => {
     const { active, over } = event;
     if (over && active.id !== over.id) {
-      const newList = arrayMove(
-        answers.subPrefs[key],
-        answers.subPrefs[key].indexOf(active.id as string),
-        answers.subPrefs[key].indexOf(over.id as string)
-      );
-      setAnswers((prev) => ({
-        ...prev,
-        subPrefs: { ...prev.subPrefs, [key]: newList },
-      }));
+      setAnswers((prev) => {
+        const newList = arrayMove(
+          prev.subPrefs[key],
+          prev.subPrefs[key].indexOf(active.id as string),
+          prev.subPrefs[key].indexOf(over.id as string)
+        );
+        return {
+          ...prev,
+          subPrefs: {
+            ...prev.subPrefs,
+            [key]: newList,
+          },
+        };
+      });
     }
   };
 
   const handleContinue = () => {
     if (step === 1) {
-      const topSegments = orderedItems.slice(0, 3);
+      const topSegments = orderedItems.slice(0, 3); // Get the top 3 segments
       const subPrefs = topSegments.reduce((acc, segment) => {
-        acc[segment] = subSegments[segment] || [];
+        acc[segment] = subSegments[segment] || []; // Ensure every top segment is initialized
         return acc;
       }, {} as Record<string, string[]>);
-
+  
       setAnswers((prev) => ({
         ...prev,
         topSegments,
-        subPrefs,
+        subPrefs, // Update subPrefs with initialized values
       }));
     }
     setStep((prev) => prev + 1);
