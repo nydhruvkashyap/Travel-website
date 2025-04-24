@@ -623,7 +623,7 @@ export default function SurveyPage() {
           {isClient && (
             <DndContext
               collisionDetection={closestCenter}
-              modifiers={[restrictToVerticalAxis]} // Remove this line to test touch behavior
+              //modifiers={[restrictToVerticalAxis]} // Remove this line to test touch behavior
               onDragStart={(event: DragStartEvent) =>
                 setDraggedItemId(event.active.id as string)
               }
