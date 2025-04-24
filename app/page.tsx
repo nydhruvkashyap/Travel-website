@@ -3,7 +3,6 @@ import Head from "next/head";
 import Link from "next/link";
 import Image from "next/image";
 
-// Updated: Replacing HTML entities with their actual characters to prevent TypeScript errors
 const categories = [
   {
     name: "Cultural Tourism",
@@ -106,48 +105,59 @@ export default function HomePage() {
           </p>
 
           {/* Category Grid */}
-            <div className="max-w-3xl mx-auto mt-8 space-y-4">
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 place-items-center">
-                {categories.map((category, index) => (
-                  <Link
-                    key={index}
-                    href={category.link}
-                    className="relative justify-center mx-auto sm:max-w-[6rem] lg:max-w-xs group"
-                  >
-                    <div className="relative overflow-hidden rounded-2xl shadow-md cursor-pointer transform hover:scale-105 transition-transform text-center">
-                      <Image
-                        src={category.image}
-                        alt={`${category.name} - Travel Experiences in India`}
-                        width={256}
-                        height={192}
-                        loading="lazy"
-                        className="sm:w-[6rem] sm:h-[4rem] lg:w-64 lg:h-48 object-cover rounded-2xl mx-auto"
-                      />
-                      <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black to-transparent p-0 group-hover:translate-y-[-0.5rem] transition-transform">
-                        <h2 className="absolute bottom-0 left-0 right-0 text-white text-lg font-semibold text-center bg-gradient-to-t from-black to-transparent p-0 group-hover:translate-y-[-2rem]">
-                          {category.name}
-                        </h2>
-                        <p className="text-white text-xs font-light max-w-[18rem] opacity-0 group-hover:opacity-100 transition-opacity duration-300 group-hover:bg-black group-hover:p-0 group-hover:rounded-md">
-                          {category.caption}
-                        </p>
-                      </div>
+          <div className="max-w-3xl mx-auto mt-8 space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 place-items-center">
+              {categories.map((category, index) => (
+                <Link
+                  key={index}
+                  href={category.link}
+                  className="relative justify-center mx-auto sm:max-w-[6rem] lg:max-w-xs group"
+                >
+                  <div className="relative overflow-hidden rounded-2xl shadow-md cursor-pointer transform hover:scale-105 transition-transform text-center">
+                    <Image
+                      src={category.image}
+                      alt={`${category.name} - Travel Experiences in India`}
+                      width={256}
+                      height={192}
+                      loading="lazy"
+                      className="sm:w-[6rem] sm:h-[4rem] lg:w-64 lg:h-48 object-cover rounded-2xl mx-auto"
+                    />
+                    <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black to-transparent p-0 group-hover:translate-y-[-0.5rem] transition-transform">
+                      <h2 className="absolute bottom-0 left-0 right-0 text-white text-lg font-semibold text-center bg-gradient-to-t from-black to-transparent p-0 group-hover:translate-y-[-2rem]">
+                        {category.name}
+                      </h2>
+                      <p className="text-white text-xs font-light max-w-[18rem] opacity-0 group-hover:opacity-100 transition-opacity duration-300 group-hover:bg-black group-hover:p-0 group-hover:rounded-md">
+                        {category.caption}
+                      </p>
                     </div>
-                  </Link>
-                ))}
-              </div>
+                  </div>
+                </Link>
+              ))}
             </div>
-            </div>
+          </div>
+        </div>
+
         {/* Footer */}
-        <footer className="text-center py-6 mt-12 text-gray-600">
+        <footer className="text-center py-6 mt-12 text-gray-600" style={{ paddingBottom: "5rem" }}>
           <p>© 2025 Mythara. All rights reserved.</p>
         </footer>
 
         {/* Enhanced Floating Trip Planner CTA */}
-        <Link href="/trip-planner" className="fixed bottom-6 right-6 z-50">
+        <Link href="/trip-planner" className="fixed bottom-6 right-6 z-50 floating-bubble">
           <div className="bg-gray-900 hover:bg-gray-800 text-white shadow-2xl rounded-xl px-4 py-2 flex items-center gap-2 cursor-pointer transition-all animate-bounce-slow">
             <span className="text-lg font-semibold">✨ Create Your Itinerary</span>
           </div>
         </Link>
+
+        {/* Mobile Styles */}
+        <style jsx global>{`
+          @media (max-width: 640px) {
+            .floating-bubble {
+              bottom: 4rem;
+              right: 1rem;
+            }
+          }
+        `}</style>
       </main>
     </>
   );

@@ -641,22 +641,21 @@ export default function SurveyPage() {
             }}
           >
             <SortableContext
-              items={currentItems} // Ensure this matches current segment
+              items={currentItems}
               strategy={verticalListSortingStrategy}
             >
               {currentItems.map((item: string, index: number) => (
                 <SortableItem key={item} id={item}>
                   <div
                     className={`px-4 py-3 border rounded-md mb-2 ${
-                      draggedItemId === item
-                        ? "bg-blue-100 border-blue-400" // Highlight dragged item
-                        : "bg-gray-50"
+                      draggedItemId === item ? "bg-blue-100 border-blue-400" : "bg-gray-50"
                     }`}
+                    style={{
+                      marginBottom: "0.5rem", // Add consistent margin
+                    }}
                   >
                     <div className="flex items-center gap-3">
-                      <div className="text-sm font-bold w-6 text-center">
-                        {index + 1}
-                      </div>
+                      <div className="text-sm font-bold w-6 text-center">{index + 1}</div>
                       <div className="text-sm text-gray-800">{item}</div>
                     </div>
                   </div>
