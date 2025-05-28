@@ -119,7 +119,7 @@ export default function FestivalsAndEventsTourism() {
           </p>
           <Link href="/trip-planner">
             <button className="bg-yellow-600 text-white px-6 py-3 rounded-lg hover:bg-yellow-700">
-              Create Your Itinerary
+            ✨ Create Your Itinerary
             </button>
           </Link>
         </div>
