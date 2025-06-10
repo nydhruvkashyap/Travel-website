@@ -10,9 +10,9 @@ export const metadata = {
   title: "Mythara – Travel. Discover. Belong.",
   description: "Explore India's diverse travel experiences with ease.",
   icons: {
-    icon: "/mythara-icon.png",        // Standard favicon
-    shortcut: "/mythara-icon.png",    // Legacy IE support
-    apple: "/mythara-icon.png",       // iOS home screen icon
+    icon: "/favicon.ico",        // Standard favicon
+    shortcut: "/favicon.ico",    // Legacy IE support
+    apple: "/favicon.ico",       // iOS home screen icon
   },
 };
 
