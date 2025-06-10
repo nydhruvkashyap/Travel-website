@@ -1,5 +1,4 @@
 import React from "react";
-import Head from "next/head";
 import Link from "next/link";
 import Image from "next/image";
 
@@ -45,14 +44,6 @@ const categories = [
 export default function HomePage() {
   return (
     <>
-      <Head>
-        <title>Mythara - Explore India&apos;s Cultural & Adventure Experiences</title>
-        <meta
-          name="description"
-          content="Discover India through personalized travel experiences. From cultural heritage to thrilling adventures, Mythara guides you to unforgettable journeys."
-        />
-      </Head>
-
       <main className="bg-gray-50 min-h-screen flex flex-col">
         {/* Fixed Banner with Logo */}
         <header className="fixed top-0 left-0 w-full bg-white shadow-md z-50 flex items-center p-4">
